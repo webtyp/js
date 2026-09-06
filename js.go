@@ -4,6 +4,8 @@ package js
 
 import (
 	_ "embed"
+	"sync"
+
 	"github.com/tinywasm/context"
 	"github.com/tinywasm/fetch"
 	. "github.com/tinywasm/fmt"
@@ -65,11 +67,25 @@ const (
 	RuntimeTinyGo
 )
 
-var activeRuntime = RuntimeGo
+var (
+	runtimeMu     sync.RWMutex
+	activeRuntime = RuntimeGo
+)
 
-// SetRuntime configures the runtime once at boot.
+// SetRuntime selects which wasm_exec.js glue PageBootstrap, ServiceWorker and
+// WebWorker embed. Safe to call at any time, including while a request for
+// one of those is in flight on another goroutine — callers that switch
+// compilers at runtime (e.g. the dev-mode TUI) rely on this.
 func SetRuntime(r Runtime) {
+	runtimeMu.Lock()
 	activeRuntime = r
+	runtimeMu.Unlock()
+}
+
+func currentRuntime() Runtime {
+	runtimeMu.RLock()
+	defer runtimeMu.RUnlock()
+	return activeRuntime
 }
 
 var (
@@ -96,7 +112,7 @@ func PageBootstrap() *Script {
 	s.validate()
 
 	runtimeJS := wasmExecGo()
-	if activeRuntime == RuntimeTinyGo {
+	if currentRuntime() == RuntimeTinyGo {
 		runtimeJS = wasmExecTinyGo()
 	}
 
@@ -129,7 +145,7 @@ func ServiceWorker(handler ServiceWorkerHandler) *Script {
 	swHandler = handler
 
 	runtimeJS := wasmExecGo()
-	if activeRuntime == RuntimeTinyGo {
+	if currentRuntime() == RuntimeTinyGo {
 		runtimeJS = wasmExecTinyGo()
 	}
 
@@ -166,7 +182,7 @@ func WebWorker(name string, handler WebWorkerHandler) *Script {
 	workerHandlers[name] = handler
 
 	runtimeJS := wasmExecGo()
-	if activeRuntime == RuntimeTinyGo {
+	if currentRuntime() == RuntimeTinyGo {
 		runtimeJS = wasmExecTinyGo()
 	}
 
