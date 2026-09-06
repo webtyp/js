@@ -3,7 +3,7 @@ package js_test
 import (
 	"testing"
 
-	"github.com/tinywasm/js"
+	"webtyp.com/js"
 )
 
 func TestScript_StringReturnsContent(t *testing.T) {

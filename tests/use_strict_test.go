@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/tinywasm/js"
+	"webtyp.com/js"
 )
 
 func TestStripLeadingUseStrict(t *testing.T) {

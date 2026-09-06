@@ -6,9 +6,9 @@ import (
 	_ "embed"
 	"sync"
 
-	"github.com/tinywasm/context"
-	"github.com/tinywasm/fetch"
-	. "github.com/tinywasm/fmt"
+	"webtyp.com/context"
+	"webtyp.com/fetch"
+	. "webtyp.com/fmt"
 )
 
 // Script represents a JS fragment produced by an SSR module.
@@ -19,7 +19,7 @@ type Script struct {
 	Content string
 }
 
-// String returns the raw content (for parity with tinywasm/css Stylesheet.String()).
+// String returns the raw content (for parity with webtyp/css Stylesheet.String()).
 func (s *Script) String() string {
 	return s.Content
 }
@@ -156,18 +156,18 @@ WebAssembly.instantiateStreaming(fetch("` + defaultWasmURL + `"), go.importObjec
 });
 
 self.addEventListener('install',  e => {
-    if (self.__tinywasm_sw_install) {
-        e.waitUntil(self.__tinywasm_sw_install());
+    if (self.__webtyp_sw_install) {
+        e.waitUntil(self.__webtyp_sw_install());
     }
 });
 self.addEventListener('activate', e => {
-    if (self.__tinywasm_sw_activate) {
-        e.waitUntil(self.__tinywasm_sw_activate());
+    if (self.__webtyp_sw_activate) {
+        e.waitUntil(self.__webtyp_sw_activate());
     }
 });
 self.addEventListener('fetch',    e => {
-    if (self.__tinywasm_sw_fetch) {
-        e.respondWith(self.__tinywasm_sw_fetch(e.request));
+    if (self.__webtyp_sw_fetch) {
+        e.respondWith(self.__webtyp_sw_fetch(e.request));
     }
 });
 `
@@ -193,8 +193,8 @@ WebAssembly.instantiateStreaming(fetch("` + defaultWasmURL + `"), go.importObjec
 });
 
 self.addEventListener('message', e => {
-    if (self.__tinywasm_worker_message) {
-        self.__tinywasm_worker_message("` + name + `", e.data);
+    if (self.__webtyp_worker_message) {
+        self.__webtyp_worker_message("` + name + `", e.data);
     }
 });
 `

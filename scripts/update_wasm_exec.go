@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tinywasm/tinygo"
+	"webtyp.com/tinygo"
 )
 
 func main() {

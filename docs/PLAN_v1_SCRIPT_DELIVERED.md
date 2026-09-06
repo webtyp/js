@@ -2,9 +2,9 @@
 
 ## Objetivo
 
-Definir en `tinywasm/js` la estructura `Script` que representa un fragmento de
+Definir en `webtyp/js` la estructura `Script` que representa un fragmento de
 JavaScript producido por un módulo SSR. Es el equivalente a `*Stylesheet` de
-`tinywasm/css`: el tipo de retorno que un módulo expone para que el extractor
+`webtyp/css`: el tipo de retorno que un módulo expone para que el extractor
 de assets decida si el contenido se acopla al bundle global (`script.js`) o se
 emite como archivo independiente (p.ej. service worker, web worker).
 
@@ -14,7 +14,7 @@ Hoy `RenderJS() string` impide emitir archivos JS que **deben** estar
 separados del bundle. Casos legítimos: service workers (necesitan estar en el
 root para definir scope), web workers cargados por URL, archivos de soporte
 PWA. Sin un tipo dedicado el usuario debe escribir el archivo a mano, lo cual
-contradice la promesa "implementa los métodos y tinywasm/app se encarga".
+contradice la promesa "implementa los métodos y webtyp/app se encarga".
 
 ## Decisiones de diseño (fijas)
 
@@ -43,13 +43,13 @@ type Script struct {
     Content string
 }
 
-// String devuelve el contenido bruto (paridad con tinywasm/css Stylesheet.String()).
+// String devuelve el contenido bruto (paridad con webtyp/css Stylesheet.String()).
 func (s *Script) String() string { return s.Content }
 ```
 
 **Sin método `Valid()`.** La regla "Name sin `/` ni `..`" sólo tiene sentido
 en el boundary donde Name se usa como path en el filesystem (assetmin), no
-en el tipo. `tinywasm/css.Stylesheet` no tiene `Valid()` por la misma razón:
+en el tipo. `webtyp/css.Stylesheet` no tiene `Valid()` por la misma razón:
 el paquete es datos, no policía. La validación se ejecuta una sola vez, en
 `assetmin` al registrar el Script.
 
@@ -71,7 +71,7 @@ validación que assetmin ya ejecuta en el boundary de registro.
 ## Tests
 
 Ubicación: `tests/` (subpaquete `js_test` — black-box, importa
-`github.com/tinywasm/js`). No mezclar tests con el código del paquete raíz.
+`webtyp.com/js`). No mezclar tests con el código del paquete raíz.
 
 | Archivo | Test | Verifica |
 |---|---|---|
@@ -81,7 +81,7 @@ Ubicación: `tests/` (subpaquete `js_test` — black-box, importa
 ## Documentación
 
 Crear `README.md` con:
-- Propósito (mirror de `tinywasm/css`).
+- Propósito (mirror de `webtyp/css`).
 - API (`Script` con `Name`, `Content` y método `String()`).
 - Ejemplo de service worker en PWA.
 - Restricciones de `Name` (root público, sin separadores).

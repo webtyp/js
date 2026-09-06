@@ -1,13 +1,13 @@
-# tinywasm/js
+# webtyp/js
 <img src="docs/img/badges.svg">
 
-Typed layer for Service Workers and Web Workers in TinyWASM.
+Typed layer for Service Workers and Web Workers in WebTyp.
 
 > **Write Go. The framework generates the JS shim.**
 
 ## Overview
 
-`tinywasm/js` is the **only JS API** in the TinyWASM framework — mirroring what `tinywasm/css` does for stylesheets. SSR modules call typed constructors returning `*Script` values with final JS content; `sitec` writes them to disk without additional coordination.
+`webtyp/js` is the **only JS API** in the WebTyp framework — mirroring what `webtyp/css` does for stylesheets. SSR modules call typed constructors returning `*Script` values with final JS content; `sitec` writes them to disk without additional coordination.
 
 ## API
 
@@ -29,7 +29,7 @@ js.SetRuntime(js.RuntimeGo)    // Standard Go compiler
 js.SetRuntime(js.RuntimeTinyGo) // TinyGo compiler (smaller binaries)
 ```
 
-`tinywasm/app` calls this automatically when it detects the compiler mode — **user modules never call it directly**.
+`webtyp/app` calls this automatically when it detects the compiler mode — **user modules never call it directly**.
 
 ### Typed constructors (recommended)
 
@@ -50,8 +50,8 @@ Implement in Go — the shim bridges browser events to your methods:
 
 ```go
 import (
-    "github.com/tinywasm/context" // stdlib context is vetoed in WASM
-    "github.com/tinywasm/fetch"
+    "webtyp.com/context" // stdlib context is vetoed in WASM
+    "webtyp.com/fetch"
 )
 
 type ServiceWorkerHandler interface {
@@ -88,9 +88,9 @@ type Message struct {
 package mymodule
 
 import (
-    "github.com/tinywasm/context"
-    "github.com/tinywasm/fetch"
-    "github.com/tinywasm/js"
+    "webtyp.com/context"
+    "webtyp.com/fetch"
+    "webtyp.com/js"
 )
 
 type CachingSW struct{}
@@ -137,11 +137,11 @@ func (m Module) RenderJS() []*js.Script {
 
 When TinyGo or Go releases a new version:
 
-1. Update `DefaultVersion` in `tinywasm/tinygo/tinygo.go` (for TinyGo).
+1. Update `DefaultVersion` in `webtyp/tinygo/tinygo.go` (for TinyGo).
    For Go, update the `go` directive in `js/go.mod`.
 2. Run: `go generate ./...`
 3. Run: `go test ./...`   (first run updates assets if generate was skipped; second run must pass)
-4. Publish: `gopush` (tinywasm/tinygo first, then tinywasm/js)
+4. Publish: `gopush` (webtyp/tinygo first, then webtyp/js)
 
 ## Escape hatch
 
@@ -157,12 +157,12 @@ For raw JS snippets (analytics, polyfills, init scripts):
 
 ## Stdlib constraints
 
-`tinywasm/js` compiles to WASM — the Go stdlib is **vetoed** to keep binary size minimal.
+`webtyp/js` compiles to WASM — the Go stdlib is **vetoed** to keep binary size minimal.
 
 | Stdlib (prohibited) | Replacement |
 |---|---|
-| `context` | `github.com/tinywasm/context` |
-| `fmt`, `errors`, `strings`, `strconv`, `path` | `github.com/tinywasm/fmt` |
-| `encoding/json` | `github.com/tinywasm/json` |
-| `time` | `github.com/tinywasm/time` |
+| `context` | `webtyp.com/context` |
+| `fmt`, `errors`, `strings`, `strconv`, `path` | `webtyp.com/fmt` |
+| `encoding/json` | `webtyp.com/json` |
+| `time` | `webtyp.com/time` |
 | `map[string]string` (headers) | `[]fetch.Header` |

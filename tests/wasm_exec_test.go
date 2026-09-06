@@ -3,14 +3,14 @@ package js_test
 import (
 	"testing"
 
-	"github.com/tinywasm/context"
-	"github.com/tinywasm/fetch"
-	. "github.com/tinywasm/fmt"
-	"github.com/tinywasm/js"
+	"webtyp.com/context"
+	"webtyp.com/fetch"
+	. "webtyp.com/fmt"
+	"webtyp.com/js"
 )
 
 // Canonical spec for the runtime selection + JS composition exposed by
-// tinywasm/js. These tests define what the implementation must satisfy
+// webtyp/js. These tests define what the implementation must satisfy
 // once js/docs/PLAN.md stages 5-6 land.
 //
 // The wasm_exec.js content getters are intentionally NOT public — behavior

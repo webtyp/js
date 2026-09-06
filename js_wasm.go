@@ -5,14 +5,14 @@ package js
 import (
 	"syscall/js"
 
-	"github.com/tinywasm/context"
+	"webtyp.com/context"
 )
 
 func init() {
-	js.Global().Set("__tinywasm_sw_install", js.FuncOf(swInstall))
-	js.Global().Set("__tinywasm_sw_activate", js.FuncOf(swActivate))
-	js.Global().Set("__tinywasm_sw_fetch", js.FuncOf(swFetch))
-	js.Global().Set("__tinywasm_worker_message", js.FuncOf(workerMessage))
+	js.Global().Set("__webtyp_sw_install", js.FuncOf(swInstall))
+	js.Global().Set("__webtyp_sw_activate", js.FuncOf(swActivate))
+	js.Global().Set("__webtyp_sw_fetch", js.FuncOf(swFetch))
+	js.Global().Set("__webtyp_worker_message", js.FuncOf(workerMessage))
 }
 
 func swInstall(this js.Value, args []js.Value) any {

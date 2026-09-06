@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/tinygo"
+	"webtyp.com/tinygo"
 )
 
 func TestWasmExecAnnotationPresent(t *testing.T) {
