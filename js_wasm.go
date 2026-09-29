@@ -12,7 +12,6 @@ func init() {
 	js.Global().Set("__webtyp_sw_install", js.FuncOf(swInstall))
 	js.Global().Set("__webtyp_sw_activate", js.FuncOf(swActivate))
 	js.Global().Set("__webtyp_sw_fetch", js.FuncOf(swFetch))
-	js.Global().Set("__webtyp_worker_message", js.FuncOf(workerMessage))
 }
 
 func swInstall(this js.Value, args []js.Value) any {
@@ -62,27 +61,4 @@ func swFetch(this js.Value, args []js.Value) any {
 	// Convert fetch.Response to JS Response
 	// This is a complex part that would involve NewResponse in JS
 	return nil // Placeholder
-}
-
-func workerMessage(this js.Value, args []js.Value) any {
-	name := args[0].String()
-
-	handler, ok := workerHandlers[name]
-	if !ok {
-		return nil
-	}
-
-	msg := &Message{
-		// TODO: convert args[1] (js.Value) to []byte
-	}
-
-	res, err := handler.OnMessage(context.Background(), msg)
-	if err != nil {
-		return nil
-	}
-	if res != nil {
-		// self.postMessage(res.Data)
-	}
-
-	return nil
 }

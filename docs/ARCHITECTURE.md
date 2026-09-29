@@ -8,7 +8,7 @@ flowchart TD
 
     APP --> PB["js.PageBootstrap()"]
     APP --> SW["js.ServiceWorker(h)"]
-    APP --> WW["js.WebWorker(name, h)"]
+    APP --> WW["js.WebWorker(name, wasmURL)"]
 
     RT[("activeRuntime\n(global)")]
     PB -.lee.- RT
@@ -26,7 +26,7 @@ flowchart TD
 
 ## Contextos de ejecución WASM
 
-El mismo binario `client.wasm` se carga en tres contextos distintos del navegador. Cada contexto es un scope JS aislado — no pueden compartir la instancia WASM entre sí.
+La página y el Service Worker cargan `client.wasm`; cada **Web Worker carga su propio binario** (`wasmURL`), para que el trabajo pesado (p. ej. inferencia de modelos) se compile para velocidad sin engordar la página. Cada contexto es un scope JS aislado — no pueden compartir la instancia WASM entre sí.
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,7 @@ flowchart LR
         S1["/script.js\nwasm_exec inline + bootstrap\ndetector: 'Window'"]
         W1["client.wasm\ninstancia A"]
         S1 --> W1
-        W1 --> D1["init() DOM\nswHandler\nworkerHandlers"]
+        W1 --> D1["init() DOM\nswHandler\njs.NewWorker(...).Post"]
     end
 
     subgraph SW["ServiceWorkerGlobalScope"]
@@ -48,10 +48,10 @@ flowchart LR
 
     subgraph WW["DedicatedWorkerGlobalScope"]
         direction TB
-        S3["/parser.worker.js\nwasm_exec inline + bootstrap\n+ message listener"]
-        W3["client.wasm\ninstancia C"]
+        S3["/parser.worker.js\nwasm_exec inline + cola de mensajes\n+ fetch(wasmURL)"]
+        W3["parser.wasm\nbinario propio"]
         S3 --> W3
-        W3 --> D3["__webtyp_worker_message(name, data)\n→ workerHandlers[name]"]
+        W3 --> D3["js.ServeWorker(handler)\nvacía la cola y atiende onmessage"]
     end
 ```
 
@@ -68,26 +68,19 @@ El shim detecta el contexto vía `self.constructor.name` para evitar ejecutar c�
 ## Registro de handlers (lado WASM)
 
 ```mermaid
-flowchart LR
-    subgraph HOST["Host (Go nativo — SSR)"]
-        SW["js.ServiceWorker(handler)"]
-        WW["js.WebWorker(name, handler)"]
-    end
-
-    subgraph WASM["WASM (navegador — js_wasm.go init)"]
-        SWG[("swHandler\n(global)")]
-        WWG[("workerHandlers[name]\n(global)")]
-
-        SWG --> FI["__webtyp_sw_install\n→ OnInstall"]
-        SWG --> FA["__webtyp_sw_activate\n→ OnActivate"]
-        SWG --> FF["__webtyp_sw_fetch\n→ OnFetch → *fetch.Response"]
-
-        WWG --> FM["__webtyp_worker_message(name, data)\n→ OnMessage"]
-    end
-
-    SW -- "guarda handler" --> SWG
-    WW -- "guarda handler" --> WWG
+flowchart TD
+    SW[host SSR: js.ServiceWorker handler] -->|guarda handler| SWG[swHandler global en client.wasm]
+    SWG --> FI[__webtyp_sw_install / activate / fetch]
+    WW[host SSR: js.WebWorker name, wasmURL] -->|escribe| WS[script del Worker: cola + fetch wasmURL]
+    WS --> WB[binario del Worker: main llama js.ServeWorker handler]
+    WB -->|respuesta data + error, buffer transferido| PG[página: js.NewWorker onReply]
+    PG -->|Post: bytes transferidos| WB
 ```
+
+El handler de un Web Worker se registra **dentro de su propio binario** (`js.ServeWorker`), no en
+el proceso SSR: ese proceso solo genera el script. Los mensajes son `[]byte`
+(`js.Message.Data`); al cruzar a JS se copian una vez a un `Uint8Array` y su buffer se
+**transfiere** (`postMessage(data, [buffer])`), sin segunda copia.
 
 ## Decisiones clave
 

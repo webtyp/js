@@ -97,9 +97,24 @@ func TestServiceWorker_ContainsHooks(t *testing.T) {
 }
 
 func TestWebWorker_UsesGivenName(t *testing.T) {
-	s := js.WebWorker("parser.worker.js", nopWebWorkerHandler{})
+	s := js.WebWorker("parser.worker.js", "/parser.wasm")
 	if s.Name != "parser.worker.js" {
 		t.Errorf("WebWorker().Name = %q, want \"parser.worker.js\"", s.Name)
+	}
+}
+
+// The Worker runs its own binary (compiled for speed), never the page's client.wasm, and
+// queues messages that arrive before that binary calls ServeWorker.
+func TestWebWorker_LoadsItsOwnBinaryAndQueuesEarlyMessages(t *testing.T) {
+	c := js.WebWorker("model.worker.js", "/worker.wasm").Content
+	if !Contains(c, `fetch("/worker.wasm")`) {
+		t.Error("worker script must fetch its own wasm URL")
+	}
+	if Contains(c, "/client.wasm") {
+		t.Error("worker script must not load the page binary client.wasm")
+	}
+	if !Contains(c, "__webtyp_worker_queue") || !Contains(c, "self.onmessage") {
+		t.Error("worker script must queue messages until ServeWorker takes over")
 	}
 }
 
@@ -111,8 +126,3 @@ func (nopServiceWorkerHandler) OnFetch(_ *context.Context, _ *js.Request) (*fetc
 	return nil, nil
 }
 
-type nopWebWorkerHandler struct{}
-
-func (nopWebWorkerHandler) OnMessage(_ *context.Context, _ *js.Message) (*js.Message, error) {
-	return nil, nil
-}

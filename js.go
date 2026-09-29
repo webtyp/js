@@ -54,7 +54,9 @@ type ServiceWorkerHandler interface {
 	OnFetch(ctx *context.Context, req *Request) (*fetch.Response, error)
 }
 
-// WebWorkerHandler processes messages received by postMessage.
+// WebWorkerHandler answers the messages a Web Worker receives. It runs inside the Worker's own
+// binary, registered with ServeWorker. A nil reply sends nothing back; an error reaches the
+// page's onReply as its error.
 type WebWorkerHandler interface {
 	OnMessage(ctx *context.Context, msg *Message) (*Message, error)
 }
@@ -88,10 +90,7 @@ func currentRuntime() Runtime {
 	return activeRuntime
 }
 
-var (
-	swHandler      ServiceWorkerHandler
-	workerHandlers = make(map[string]WebWorkerHandler)
-)
+var swHandler ServiceWorkerHandler
 
 // --- Embeds ---
 
@@ -174,12 +173,14 @@ self.addEventListener('fetch',    e => {
 	return &Script{Name: "sw.js", Content: content}
 }
 
-// WebWorker returns a standalone Script for a web worker.
-func WebWorker(name string, handler WebWorkerHandler) *Script {
+// WebWorker returns the standalone script that starts a Web Worker running its own binary,
+// wasmURL (e.g. "/worker.wasm"), not the page's client.wasm: heavy work such as model inference
+// is compiled separately, for speed. Inside that binary, js.ServeWorker(handler) answers the
+// messages; the page talks to it with js.NewWorker(name, onReply). Messages that arrive while the
+// binary is still starting are queued, not lost.
+func WebWorker(name, wasmURL string) *Script {
 	s := &Script{Name: name}
 	s.validate()
-
-	workerHandlers[name] = handler
 
 	runtimeJS := wasmExecGo()
 	if currentRuntime() == RuntimeTinyGo {
@@ -187,16 +188,15 @@ func WebWorker(name string, handler WebWorkerHandler) *Script {
 	}
 
 	content := runtimeJS + `
+self.` + workerQueueName + ` = [];
+self.onmessage = e => self.` + workerQueueName + `.push(e.data);
 const go = new Go();
-WebAssembly.instantiateStreaming(fetch("` + defaultWasmURL + `"), go.importObject).then((result) => {
+WebAssembly.instantiateStreaming(fetch("` + wasmURL + `"), go.importObject).then((result) => {
 	go.run(result.instance);
-});
-
-self.addEventListener('message', e => {
-    if (self.__webtyp_worker_message) {
-        self.__webtyp_worker_message("` + name + `", e.data);
-    }
 });
 `
 	return &Script{Name: name, Content: content}
 }
+
+// workerQueueName is the global where the Worker script queues messages until ServeWorker runs.
+const workerQueueName = "__webtyp_worker_queue"

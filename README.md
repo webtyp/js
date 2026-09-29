@@ -40,8 +40,9 @@ js.PageBootstrap() *Script
 // Generates /sw.js with wasm_exec.js + SW event listeners inlined.
 js.ServiceWorker(handler ServiceWorkerHandler) *Script
 
-// Generates /<name> with wasm_exec.js + message listener inlined.
-js.WebWorker(name string, handler WebWorkerHandler) *Script
+// Generates /<name>: wasm_exec.js + a queue for early messages, loading the Worker's OWN
+// binary wasmURL (e.g. "/worker.wasm"), never the page's client.wasm.
+js.WebWorker(name, wasmURL string) *Script
 ```
 
 ### Handler interfaces
@@ -117,21 +118,32 @@ func (m Module) RenderJS() []*js.Script {
 
 ## Web Worker example
 
+A Web Worker runs its **own binary**, so heavy work (model inference, parsing) never blocks the
+page and can be compiled for speed while the page stays compiled for size. Three pieces, one per
+place they run:
+
 ```go
+// 1. SSR module (host): publish the Worker script.
+func (m Module) RenderJS() []*js.Script {
+    return []*js.Script{js.WebWorker("parser.worker.js", "/parser.wasm")}
+}
+
+// 2. The Worker binary (parser.wasm, its own main): answer messages, in order.
 type ParserWorker struct{}
 
-func (w *ParserWorker) OnMessage(ctx context.Context, msg *js.Message) (*js.Message, error) {
-    // Process msg.Data ([]byte) and return result.
-    result := process(msg.Data)
-    return &js.Message{Data: result}, nil
+func (ParserWorker) OnMessage(ctx *context.Context, msg *js.Message) (*js.Message, error) {
+    return &js.Message{Data: process(msg.Data)}, nil // nil reply = nothing sent back
 }
 
-func (m Module) RenderJS() []*js.Script {
-    return []*js.Script{
-        js.WebWorker("parser.worker.js", &ParserWorker{}),
-    }
-}
+func main() { js.ServeWorker(ParserWorker{}) } // never returns
+
+// 3. The page binary (client.wasm): talk to it.
+w := js.NewWorker("parser.worker.js", func(reply *js.Message, err error) { /* … */ })
+w.Post(&js.Message{Data: input}) // bytes are transferred, not copied again
 ```
+
+Messages that reach the Worker before its binary has started are queued and delivered in order.
+A handler error arrives at the page as `err`.
 
 ## Updating wasm_exec.js
 
