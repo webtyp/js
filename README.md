@@ -98,6 +98,10 @@ w.Post(&js.Message{Data: input}) // bytes are transferred, not copied again
 Messages that reach the Worker before its binary has started are queued and delivered in order.
 A handler error arrives at the page as `err`.
 
+A long message (a download, a model loading) can report progress before its reply:
+`js.PostToPage(&js.Message{Data: progress})` from inside the Worker reaches the same `onReply`;
+the application's own message format tells progress and replies apart.
+
 ## Updating wasm_exec.js
 
 When TinyGo or Go releases a new version:

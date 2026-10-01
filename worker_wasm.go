@@ -63,6 +63,17 @@ func ServeWorker(h WebWorkerHandler) {
 	}
 }
 
+// PostToPage sends msg from inside the Worker to the page outside any reply: progress while a long
+// message is being handled, or news the page did not ask for. The page receives it through the
+// same onReply as a reply (NewWorker), so the application's own protocol tells them apart.
+// Call it only from the Worker binary (after ServeWorker started).
+func PostToPage(msg *Message) {
+	if msg == nil {
+		return
+	}
+	postReply(js.Global(), msg, nil)
+}
+
 func postReply(target js.Value, reply *Message, err error) {
 	env := js.Global().Get("Object").New()
 	errText := ""
