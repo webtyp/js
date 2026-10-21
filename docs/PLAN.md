@@ -2,6 +2,8 @@
 PLAN: "refactor: rename page binary URL from /client.wasm to /browser.wasm"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 1056176574103482956
 ---
 
 > Read `AGENTS.md` at the repo root before any change.
