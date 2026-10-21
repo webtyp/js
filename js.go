@@ -86,8 +86,8 @@ func wasmExecGo() string     { return wasmExecGoSource }
 func wasmExecTinyGo() string { return wasmExecTinyGoSource }
 
 // DefaultWasmURL is where the development build serves the page binary. Release builds pass the
-// content-hashed name sitec emits (client.3f9a1c2b.wasm).
-const DefaultWasmURL = "/client.wasm"
+// content-hashed name sitec emits (browser.3f9a1c2b.wasm).
+const DefaultWasmURL = "/browser.wasm"
 
 const errEmptyWasmURL = "js: PageBootstrap needs the wasm URL (js.DefaultWasmURL in development)"
 
@@ -127,7 +127,7 @@ if (WebAssembly.instantiateStreaming) {
 }
 
 // WebWorker returns the standalone script that starts a Web Worker running its own binary,
-// wasmURL (e.g. "/worker.wasm"), not the page's client.wasm: heavy work such as model inference
+// wasmURL (e.g. "/worker.wasm"), not the page's browser.wasm: heavy work such as model inference
 // is compiled separately, for speed. Inside that binary, js.ServeWorker(handler) answers the
 // messages; the page talks to it with js.NewWorker(name, onReply). Messages that arrive while the
 // binary is still starting are queued, not lost.

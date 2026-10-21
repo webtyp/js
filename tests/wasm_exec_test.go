@@ -40,13 +40,13 @@ func TestPageBootstrap_IsBundleScript(t *testing.T) {
 	}
 }
 
-func TestPageBootstrap_ReferencesClientWasm(t *testing.T) {
+func TestPageBootstrap_ReferencesBrowserWasm(t *testing.T) {
 	c := js.PageBootstrap(js.DefaultWasmURL).Content
 	if !Contains(c, "WebAssembly.instantiateStreaming") {
 		t.Error("PageBootstrap() missing WebAssembly.instantiateStreaming")
 	}
-	if !Contains(c, "/client.wasm") {
-		t.Error("PageBootstrap() must fetch /client.wasm")
+	if !Contains(c, "/browser.wasm") {
+		t.Error("PageBootstrap() must fetch /browser.wasm")
 	}
 }
 
@@ -77,8 +77,8 @@ func TestPageBootstrap_InlinesRuntimePerSetRuntime(t *testing.T) {
 
 // A release build passes the content-hashed name; the bootstrap must load exactly that binary.
 func TestPageBootstrap_UsesGivenURL(t *testing.T) {
-	c := js.PageBootstrap("/client.3f9a1c2b.wasm").Content
-	if Count(c, `fetch("/client.3f9a1c2b.wasm")`) != 2 {
+	c := js.PageBootstrap("/browser.3f9a1c2b.wasm").Content
+	if Count(c, `fetch("/browser.3f9a1c2b.wasm")`) != 2 {
 		t.Error("both fetch paths (streaming and fallback) must load the given URL")
 	}
 	if Contains(c, js.DefaultWasmURL) {
@@ -93,15 +93,15 @@ func TestWebWorker_UsesGivenName(t *testing.T) {
 	}
 }
 
-// The Worker runs its own binary (compiled for speed), never the page's client.wasm, and
+// The Worker runs its own binary (compiled for speed), never the page's browser.wasm, and
 // queues messages that arrive before that binary calls ServeWorker.
 func TestWebWorker_LoadsItsOwnBinaryAndQueuesEarlyMessages(t *testing.T) {
 	c := js.WebWorker("model.worker.js", "/worker.wasm").Content
 	if !Contains(c, `fetch("/worker.wasm")`) {
 		t.Error("worker script must fetch its own wasm URL")
 	}
-	if Contains(c, "/client.wasm") {
-		t.Error("worker script must not load the page binary client.wasm")
+	if Contains(c, "/browser.wasm") {
+		t.Error("worker script must not load the page binary browser.wasm")
 	}
 	if !Contains(c, "__webtyp_worker_queue") || !Contains(c, "self.onmessage") {
 		t.Error("worker script must queue messages until ServeWorker takes over")

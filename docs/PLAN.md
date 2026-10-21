@@ -2,8 +2,10 @@
 PLAN: "refactor: rename page binary URL from /client.wasm to /browser.wasm"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 1056176574103482956
+PR: https://github.com/webtyp/js/pull/5
+REVIEWED_COMMIT: 236dce01334fca9d26f6597682349da844f806d6
 ---
 
 > Read `AGENTS.md` at the repo root before any change.
