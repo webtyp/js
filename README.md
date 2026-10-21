@@ -39,7 +39,7 @@ js.SetRuntime(js.RuntimeTinyGo) // TinyGo compiler (smaller binaries)
 js.PageBootstrap(wasmURL string) *Script
 
 // Generates /<name>: wasm_exec.js + a queue for early messages, loading the Worker's OWN
-// binary wasmURL (e.g. "/worker.wasm"), never the page's client.wasm.
+// binary wasmURL (e.g. "/worker.wasm"), never the page's browser.wasm.
 js.WebWorker(name, wasmURL string) *Script
 ```
 
@@ -90,7 +90,7 @@ func (ParserWorker) OnMessage(ctx *context.Context, msg *js.Message) (*js.Messag
 
 func main() { js.ServeWorker(ParserWorker{}) } // never returns
 
-// 3. The page binary (client.wasm): talk to it.
+// 3. The page binary (browser.wasm): talk to it.
 w := js.NewWorker("parser.worker.js", func(reply *js.Message, err error) { /* … */ })
 w.Post(&js.Message{Data: input}) // bytes are transferred, not copied again
 ```

@@ -22,14 +22,14 @@ flowchart TD
 
 ## Contextos de ejecución WASM
 
-La página carga su binario (`client.wasm` en desarrollo, `client.<hash>.wasm` en release); cada **Web Worker carga su propio binario** (`wasmURL`), para que el trabajo pesado (p. ej. inferencia de modelos) se compile para velocidad sin engordar la página. Cada contexto es un scope JS aislado — no pueden compartir la instancia WASM entre sí.
+La página carga su binario (`browser.wasm` en desarrollo, `browser.<hash>.wasm` en release); cada **Web Worker carga su propio binario** (`wasmURL`), para que el trabajo pesado (p. ej. inferencia de modelos) se compile para velocidad sin engordar la página. Cada contexto es un scope JS aislado — no pueden compartir la instancia WASM entre sí.
 
 ```mermaid
 flowchart LR
     subgraph WIN["Browser Window (DOM)"]
         direction TB
         S1["/script.js\nwasm_exec inline + bootstrap\ndetector: 'Window'"]
-        W1["client.wasm\ninstancia A"]
+        W1["browser.wasm\ninstancia A"]
         S1 --> W1
         W1 --> D1["init() DOM\njs.NewWorker(...).Post"]
     end
