@@ -86,6 +86,19 @@ func TestPageBootstrap_UsesGivenURL(t *testing.T) {
 	}
 }
 
+func TestPageBootstrap_PreloadsLangMeta(t *testing.T) {
+	c := js.PageBootstrap(js.DefaultWasmURL).Content
+	if !Contains(c, `meta[name="webtyp-lang"]`) {
+		t.Error("PageBootstrap() must look up <meta name=\"webtyp-lang\">")
+	}
+	if !Contains(c, "__webtypLang") {
+		t.Error("PageBootstrap() must store preloaded dictionary in __webtypLang")
+	}
+	if !Contains(c, "Promise.all") {
+		t.Error("PageBootstrap() must await both WASM and dictionary before go.run")
+	}
+}
+
 func TestWebWorker_UsesGivenName(t *testing.T) {
 	s := js.WebWorker("parser.worker.js", "/parser.wasm")
 	if s.Name != "parser.worker.js" {

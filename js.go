@@ -108,19 +108,16 @@ func PageBootstrap(wasmURL string) *Script {
 	content := runtimeJS + `
 if (self.constructor.name === "Window") {
 const go = new Go();
-if (WebAssembly.instantiateStreaming) {
-	WebAssembly.instantiateStreaming(fetch("` + wasmURL + `"), go.importObject).then((result) => {
-		go.run(result.instance);
-	});
-} else {
-	fetch("` + wasmURL + `").then(response =>
-		response.arrayBuffer()
-	).then(bytes =>
-		WebAssembly.instantiate(bytes, go.importObject)
-	).then(result => {
-		go.run(result.instance);
-	});
-}
+const langMeta = document.querySelector('meta[name="webtyp-lang"]');
+const langPromise = (langMeta && langMeta.content)
+	? fetch(langMeta.content).then(r => r.ok ? r.json() : null).then(d => { if (d) self.__webtypLang = d; }).catch(() => {})
+	: Promise.resolve();
+const wasmPromise = WebAssembly.instantiateStreaming
+	? WebAssembly.instantiateStreaming(fetch("` + wasmURL + `"), go.importObject)
+	: fetch("` + wasmURL + `").then(r => r.arrayBuffer()).then(b => WebAssembly.instantiate(b, go.importObject));
+Promise.all([wasmPromise, langPromise]).then(([result]) => {
+	go.run(result.instance);
+});
 }
 `
 	return &Script{Name: "", Content: content}
